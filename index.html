@@ -566,7 +566,7 @@
     <script>
         // Google Sheets setup
         // Replace this with your actual Google Sheets URL (published as CSV)
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pubhtml';
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';  // Leave empty to use default products
         
         // Create audio context for sounds
         function playSound(type) {
@@ -600,6 +600,12 @@
 
         // Fetch products from Google Sheets
         async function loadProducts() {
+            // If no sheet URL provided, use defaults
+            if (!SHEET_URL || SHEET_URL === '') {
+                loadDefaultProducts();
+                return;
+            }
+            
             try {
                 const response = await fetch(SHEET_URL);
                 const csvText = await response.text();
@@ -624,7 +630,7 @@
                 
                 renderGallery();
             } catch (error) {
-                console.error('Error loading products:', error);
+                console.error('Error loading products from sheet:', error);
                 // Fallback to default products if sheet fails
                 loadDefaultProducts();
             }
@@ -849,7 +855,8 @@
             }
         });
 
-        renderGallery();
+        // Initialize - try to load from Google Sheets, fallback to defaults
+        loadProducts();
         updateCart();
     </script>
 </body>
