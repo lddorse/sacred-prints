@@ -610,24 +610,45 @@
                 const response = await fetch(SHEET_URL);
                 const csvText = await response.text();
                 
-                // Parse CSV
-                const lines = csvText.split('\n');
+                console.log('CSV loaded:', csvText); // Debug log
+                
+                // Parse CSV - simple parser for basic CSVs
+                const lines = csvText.trim().split('\n');
                 const headers = lines[0].split(',').map(h => h.trim());
                 
                 prints = lines.slice(1)
                     .filter(line => line.trim())
                     .map((line, index) => {
-                        const values = line.split(',').map(v => v.trim());
+                        // Split by comma but handle edge cases
+                        const values = [];
+                        let current = '';
+                        let inQuotes = false;
+                        
+                        for (let char of line) {
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                values.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        values.push(current.trim());
+                        
+                        console.log('Parsed row:', values); // Debug log
+                        
                         return {
                             id: parseInt(values[0]) || index + 1,
                             title: values[1] || 'Untitled',
                             description: values[2] || 'No description',
                             price: parseFloat(values[3]) || 15.00,
                             image: values[4] || '',
-                            symbol: values[5] || '&#10024;'
+                            symbol: values[5] || ''
                         };
                     });
                 
+                console.log('Products loaded:', prints); // Debug log
                 renderGallery();
             } catch (error) {
                 console.error('Error loading products from sheet:', error);
