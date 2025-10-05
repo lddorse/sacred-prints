@@ -152,12 +152,38 @@
             border-radius: 5px;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
             font-family: 'Georgia', serif;
+            position: relative;
+            overflow: hidden;
         }
 
         .add-to-cart:hover {
             background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .add-to-cart:active {
+            transform: scale(0.95);
+        }
+
+        .add-to-cart::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .add-to-cart.clicked::after {
+            width: 300px;
+            height: 300px;
         }
 
         .cart-sidebar {
@@ -369,12 +395,38 @@
             border-radius: 5px;
             font-size: 1.2rem;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
             font-family: 'Georgia', serif;
+            position: relative;
+            overflow: hidden;
         }
 
         .lightbox-add-btn:hover {
             background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .lightbox-add-btn:active {
+            transform: scale(0.95);
+        }
+
+        .lightbox-add-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .lightbox-add-btn.clicked::after {
+            width: 300px;
+            height: 300px;
         }
 
         .lightbox-close {
@@ -512,34 +564,98 @@
     </div>
 
     <script>
-        const prints = [
-            { id: 1, title: "Divine Light", description: "A serene depiction of heavenly illumination", price: 15.00, symbol: "&#10024;" },
-            { id: 2, title: "Prayer in Silence", description: "Peaceful moment of contemplation", price: 15.00, symbol: "&#128591;" },
-            { id: 3, title: "Sacred Heart", description: "Symbol of divine love and compassion", price: 18.00, symbol: "&#10084;" },
-            { id: 4, title: "Angels Above", description: "Celestial beings watching over", price: 20.00, symbol: "&#128124;" },
-            { id: 5, title: "The Cross", description: "Timeless symbol of faith and hope", price: 15.00, symbol: "&#10013;" },
-            { id: 6, title: "Blessed Path", description: "Journey toward spiritual enlightenment", price: 18.00, symbol: "&#128330;" },
-            { id: 7, title: "Garden of Peace", description: "Tranquil sanctuary for reflection", price: 15.00, symbol: "&#127807;" },
-            { id: 8, title: "Morning Glory", description: "Dawn breaking with divine promise", price: 18.00, symbol: "&#127749;" },
-            { id: 9, title: "Holy Trinity", description: "Unity in sacred mystery", price: 20.00, symbol: "&#11088;" },
-            { id: 10, title: "Psalm 23", description: "The Lord is my shepherd", price: 15.00, symbol: "&#128017;" },
-            { id: 11, title: "Crown of Thorns", description: "Sacrifice and redemption", price: 18.00, symbol: "&#128081;" },
-            { id: 12, title: "Risen Glory", description: "Celebration of resurrection", price: 20.00, symbol: "&#9728;" },
-            { id: 13, title: "Faith & Hope", description: "Anchored in divine promises", price: 15.00, symbol: "&#9875;" },
-            { id: 14, title: "Sacred Scriptures", description: "Words of eternal wisdom", price: 15.00, symbol: "&#128214;" },
-            { id: 15, title: "Lamb of God", description: "Pure and innocent sacrifice", price: 18.00, symbol: "&#128016;" },
-            { id: 16, title: "Heavenly Gates", description: "Portal to eternal paradise", price: 20.00, symbol: "&#128682;" },
-            { id: 17, title: "Miracle Waters", description: "Baptism and spiritual rebirth", price: 15.00, symbol: "&#128167;" },
-            { id: 18, title: "Candlelight Vigil", description: "Hope burning in darkness", price: 15.00, symbol: "&#128367;" },
-            { id: 19, title: "Divine Mercy", description: "Infinite compassion and forgiveness", price: 18.00, symbol: "&#128171;" },
-            { id: 20, title: "Eternal Love", description: "God's unending grace", price: 20.00, symbol: "&#128157;" }
-        ];
-
-        // Stripe will be initialized here once backend is set up
-        // For now, checkout shows info about next steps
+        // Google Sheets setup
+        // Replace this with your actual Google Sheets URL (published as CSV)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pubhtml';
         
+        // Create audio context for sounds
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (type === 'click') {
+                // Gentle bell-like sound
+                oscillator.frequency.value = 800;
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } else if (type === 'cart') {
+                // Satisfying "pop" sound
+                oscillator.frequency.value = 600;
+                gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+
+        let prints = [];
         let cart = [];
         let currentLightboxIndex = 0;
+
+        // Fetch products from Google Sheets
+        async function loadProducts() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                prints = lines.slice(1)
+                    .filter(line => line.trim())
+                    .map((line, index) => {
+                        const values = line.split(',').map(v => v.trim());
+                        return {
+                            id: parseInt(values[0]) || index + 1,
+                            title: values[1] || 'Untitled',
+                            description: values[2] || 'No description',
+                            price: parseFloat(values[3]) || 15.00,
+                            image: values[4] || '',
+                            symbol: values[5] || '&#10024;'
+                        };
+                    });
+                
+                renderGallery();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                // Fallback to default products if sheet fails
+                loadDefaultProducts();
+            }
+        }
+
+        // Fallback products (same as before)
+        function loadDefaultProducts() {
+            prints = [
+                { id: 1, title: "Divine Light", description: "A serene depiction of heavenly illumination", price: 15.00, symbol: "&#10024;", image: "" },
+                { id: 2, title: "Prayer in Silence", description: "Peaceful moment of contemplation", price: 15.00, symbol: "&#128591;", image: "" },
+                { id: 3, title: "Sacred Heart", description: "Symbol of divine love and compassion", price: 18.00, symbol: "&#10084;", image: "" },
+                { id: 4, title: "Angels Above", description: "Celestial beings watching over", price: 20.00, symbol: "&#128124;", image: "" },
+                { id: 5, title: "The Cross", description: "Timeless symbol of faith and hope", price: 15.00, symbol: "&#10013;", image: "" },
+                { id: 6, title: "Blessed Path", description: "Journey toward spiritual enlightenment", price: 18.00, symbol: "&#128330;", image: "" },
+                { id: 7, title: "Garden of Peace", description: "Tranquil sanctuary for reflection", price: 15.00, symbol: "&#127807;", image: "" },
+                { id: 8, title: "Morning Glory", description: "Dawn breaking with divine promise", price: 18.00, symbol: "&#127749;", image: "" },
+                { id: 9, title: "Holy Trinity", description: "Unity in sacred mystery", price: 20.00, symbol: "&#11088;", image: "" },
+                { id: 10, title: "Psalm 23", description: "The Lord is my shepherd", price: 15.00, symbol: "&#128017;", image: "" },
+                { id: 11, title: "Crown of Thorns", description: "Sacrifice and redemption", price: 18.00, symbol: "&#128081;", image: "" },
+                { id: 12, title: "Risen Glory", description: "Celebration of resurrection", price: 20.00, symbol: "&#9728;", image: "" },
+                { id: 13, title: "Faith & Hope", description: "Anchored in divine promises", price: 15.00, symbol: "&#9875;", image: "" },
+                { id: 14, title: "Sacred Scriptures", description: "Words of eternal wisdom", price: 15.00, symbol: "&#128214;", image: "" },
+                { id: 15, title: "Lamb of God", description: "Pure and innocent sacrifice", price: 18.00, symbol: "&#128016;", image: "" },
+                { id: 16, title: "Heavenly Gates", description: "Portal to eternal paradise", price: 20.00, symbol: "&#128682;", image: "" },
+                { id: 17, title: "Miracle Waters", description: "Baptism and spiritual rebirth", price: 15.00, symbol: "&#128167;", image: "" },
+                { id: 18, title: "Candlelight Vigil", description: "Hope burning in darkness", price: 15.00, symbol: "&#128367;", image: "" },
+                { id: 19, title: "Divine Mercy", description: "Infinite compassion and forgiveness", price: 18.00, symbol: "&#128171;", image: "" },
+                { id: 20, title: "Eternal Love", description: "God's unending grace", price: 20.00, symbol: "&#128157;", image: "" }
+            ];
+            renderGallery();
+        }
 
         function renderGallery() {
             const gallery = document.getElementById('gallery');
@@ -562,13 +678,17 @@
             gallery.innerHTML = html;
             
             document.querySelectorAll('.add-to-cart').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
+                    playSound('cart');
+                    this.classList.add('clicked');
+                    setTimeout(() => this.classList.remove('clicked'), 600);
                     addToCart(parseInt(this.getAttribute('data-id')));
                 });
             });
 
             document.querySelectorAll('.print-image').forEach(img => {
                 img.addEventListener('click', function() {
+                    playSound('click');
                     openLightbox(parseInt(this.getAttribute('data-index')));
                 });
             });
@@ -595,16 +715,21 @@
             
             const addBtn = document.getElementById('lightboxAddBtn');
             addBtn.onclick = function() {
+                playSound('cart');
+                this.classList.add('clicked');
+                setTimeout(() => this.classList.remove('clicked'), 600);
                 addToCart(print.id);
             };
         }
 
         function nextImage() {
+            playSound('click');
             currentLightboxIndex = (currentLightboxIndex + 1) % prints.length;
             updateLightbox();
         }
 
         function prevImage() {
+            playSound('click');
             currentLightboxIndex = (currentLightboxIndex - 1 + prints.length) % prints.length;
             updateLightbox();
         }
