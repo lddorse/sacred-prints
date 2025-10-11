@@ -649,10 +649,8 @@
                 
                 console.log('Products loaded:', prints); // Debug log
                 
-                // Small delay to ensure DOM is ready
-                setTimeout(() => {
-                    renderGallery();
-                }, 100);
+                // Render immediately
+                renderGallery();
             } catch (error) {
                 console.error('Error loading products from sheet:', error);
                 // Fallback to default products if sheet fails
@@ -688,6 +686,8 @@
         }
 
         function renderGallery() {
+            console.log('renderGallery called with', prints.length, 'products');
+            
             const gallery = document.getElementById('gallery');
             let html = '';
             
