@@ -712,6 +712,9 @@
                 `;
             });
             
+            console.log('Generated HTML length:', html.length);
+            console.log('First 500 chars of HTML:', html.substring(0, 500));
+            
             gallery.innerHTML = html;
             
             document.querySelectorAll('.add-to-cart').forEach(btn => {
