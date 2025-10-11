@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sacred Prints Gallery</title>
-    <script src="https://js.stripe.com/v3/"></script>
     <style>
         * {
             margin: 0;
@@ -566,7 +565,7 @@
     <script>
         // Google Sheets setup
         // Replace this with your actual Google Sheets URL (published as CSV)
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';  // Leave empty to use default products
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1CdS96rj3dHySYE94dyyHPr5yLmZemI9kK9gcR6WTtT0/edit?gid=0#gid=0';  // Leave empty to use default products
         
         // Create audio context for sounds
         function playSound(type) {
@@ -649,7 +648,11 @@
                     });
                 
                 console.log('Products loaded:', prints); // Debug log
-                renderGallery();
+                
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    renderGallery();
+                }, 100);
             } catch (error) {
                 console.error('Error loading products from sheet:', error);
                 // Fallback to default products if sheet fails
