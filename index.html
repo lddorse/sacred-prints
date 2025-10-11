@@ -687,11 +687,18 @@
 
         function renderGallery() {
             console.log('renderGallery called with', prints.length, 'products');
+            console.log('Prints array:', prints);
             
             const gallery = document.getElementById('gallery');
+            if (!gallery) {
+                console.error('Gallery element not found!');
+                return;
+            }
+            
             let html = '';
             
             prints.forEach((print, index) => {
+                console.log(`Processing product ${index}:`, print);
                 html += `
                     <div class="print-card">
                         <div class="print-image" data-index="${index}">${print.symbol}</div>
