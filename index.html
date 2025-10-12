@@ -563,21 +563,28 @@
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';
+        // Google Sheets setup
+        // Replace this with your actual Google Sheets URL (published as CSV)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';  // Leave empty to use default products
         
+        // Create audio context for sounds
         function playSound(type) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
+            
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
+            
             if (type === 'click') {
+                // Gentle bell-like sound
                 oscillator.frequency.value = 800;
                 gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.3);
             } else if (type === 'cart') {
+                // Satisfying "pop" sound
                 oscillator.frequency.value = 600;
                 gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
@@ -585,33 +592,51 @@
                 oscillator.stop(audioContext.currentTime + 0.2);
             }
         }
-        
+
         let prints = [];
         let cart = [];
         let currentLightboxIndex = 0;
-        
+
+        // Fetch products from Google Sheets
         async function loadProducts() {
-            if (!SHEET_URL) return loadDefaultProducts();
+            // If no sheet URL provided, use defaults
+            if (!SHEET_URL || SHEET_URL === '') {
+                loadDefaultProducts();
+                return;
+            }
+            
             try {
                 const response = await fetch(SHEET_URL);
                 const csvText = await response.text();
+                
+                console.log('CSV loaded:', csvText); // Debug log
+                
+                // Parse CSV - simple parser for basic CSVs
                 const lines = csvText.trim().split('\n');
                 const headers = lines[0].split(',').map(h => h.trim());
-        
+                
                 prints = lines.slice(1)
                     .filter(line => line.trim())
                     .map((line, index) => {
+                        // Split by comma but handle edge cases
                         const values = [];
                         let current = '';
                         let inQuotes = false;
+                        
                         for (let char of line) {
-                            if (char === '"') inQuotes = !inQuotes;
-                            else if (char === ',' && !inQuotes) {
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
                                 values.push(current.trim());
                                 current = '';
-                            } else current += char;
+                            } else {
+                                current += char;
+                            }
                         }
                         values.push(current.trim());
+                        
+                        console.log('Parsed row:', values); // Debug log
+                        
                         return {
                             id: parseInt(values[0]) || index + 1,
                             title: values[1] || 'Untitled',
@@ -621,83 +646,113 @@
                             symbol: values[5] || ''
                         };
                     });
+                
+                console.log('Products loaded:', prints); // Debug log
+                
+                // Render immediately
                 renderGallery();
-            } catch (e) {
-                console.error('Error loading products:', e);
+            } catch (error) {
+                console.error('Error loading products from sheet:', error);
+                // Fallback to default products if sheet fails
                 loadDefaultProducts();
             }
         }
-        
+
+        // Fallback products (same as before)
         function loadDefaultProducts() {
             prints = [
-                { id: 1, title: "Divine Light", description: "A serene depiction of heavenly illumination", price: 15.00, image: "https://picsum.photos/seed/light/600/400" },
-                { id: 2, title: "Prayer in Silence", description: "Peaceful moment of contemplation", price: 15.00, image: "https://picsum.photos/seed/prayer/600/400" },
-                { id: 3, title: "Sacred Heart", description: "Symbol of divine love and compassion", price: 18.00, image: "https://picsum.photos/seed/heart/600/400" },
-                { id: 4, title: "Angels Above", description: "Celestial beings watching over", price: 20.00, image: "https://picsum.photos/seed/angel/600/400" },
-                { id: 5, title: "The Cross", description: "Timeless symbol of faith and hope", price: 15.00, image: "https://picsum.photos/seed/cross/600/400" },
+                { id: 1, title: "Divine Light", description: "A serene depiction of heavenly illumination", price: 15.00, symbol: "&#10024;", image: "" },
+                { id: 2, title: "Prayer in Silence", description: "Peaceful moment of contemplation", price: 15.00, symbol: "&#128591;", image: "" },
+                { id: 3, title: "Sacred Heart", description: "Symbol of divine love and compassion", price: 18.00, symbol: "&#10084;", image: "" },
+                { id: 4, title: "Angels Above", description: "Celestial beings watching over", price: 20.00, symbol: "&#128124;", image: "" },
+                { id: 5, title: "The Cross", description: "Timeless symbol of faith and hope", price: 15.00, symbol: "&#10013;", image: "" },
+                { id: 6, title: "Blessed Path", description: "Journey toward spiritual enlightenment", price: 18.00, symbol: "&#128330;", image: "" },
+                { id: 7, title: "Garden of Peace", description: "Tranquil sanctuary for reflection", price: 15.00, symbol: "&#127807;", image: "" },
+                { id: 8, title: "Morning Glory", description: "Dawn breaking with divine promise", price: 18.00, symbol: "&#127749;", image: "" },
+                { id: 9, title: "Holy Trinity", description: "Unity in sacred mystery", price: 20.00, symbol: "&#11088;", image: "" },
+                { id: 10, title: "Psalm 23", description: "The Lord is my shepherd", price: 15.00, symbol: "&#128017;", image: "" },
+                { id: 11, title: "Crown of Thorns", description: "Sacrifice and redemption", price: 18.00, symbol: "&#128081;", image: "" },
+                { id: 12, title: "Risen Glory", description: "Celebration of resurrection", price: 20.00, symbol: "&#9728;", image: "" },
+                { id: 13, title: "Faith & Hope", description: "Anchored in divine promises", price: 15.00, symbol: "&#9875;", image: "" },
+                { id: 14, title: "Sacred Scriptures", description: "Words of eternal wisdom", price: 15.00, symbol: "&#128214;", image: "" },
+                { id: 15, title: "Lamb of God", description: "Pure and innocent sacrifice", price: 18.00, symbol: "&#128016;", image: "" },
+                { id: 16, title: "Heavenly Gates", description: "Portal to eternal paradise", price: 20.00, symbol: "&#128682;", image: "" },
+                { id: 17, title: "Miracle Waters", description: "Baptism and spiritual rebirth", price: 15.00, symbol: "&#128167;", image: "" },
+                { id: 18, title: "Candlelight Vigil", description: "Hope burning in darkness", price: 15.00, symbol: "&#128367;", image: "" },
+                { id: 19, title: "Divine Mercy", description: "Infinite compassion and forgiveness", price: 18.00, symbol: "&#128171;", image: "" },
+                { id: 20, title: "Eternal Love", description: "God's unending grace", price: 20.00, symbol: "&#128157;", image: "" }
             ];
             renderGallery();
         }
-        
+
         function renderGallery() {
+            console.log('renderGallery called with', prints.length, 'products');
+            console.log('Prints array:', prints);
+            
             const gallery = document.getElementById('gallery');
+            if (!gallery) {
+                console.error('Gallery element not found!');
+                return;
+            }
+            
             let html = '';
+            
             prints.forEach((print, index) => {
+                console.log(`Processing product ${index}:`, print);
                 html += `
                     <div class="print-card">
-                        <div class="print-image" data-index="${index}">
-                            ${print.image 
-                                ? `<img src="${print.image}" alt="${print.title}" style="width:100%;height:100%;object-fit:cover;">`
-                                : print.symbol || '🖼️'}
-                        </div>
+                        <div class="print-image" data-index="${index}">${print.symbol}</div>
                         <div class="print-info">
                             <h3 class="print-title">${print.title}</h3>
                             <p class="print-description">${print.description}</p>
-                            <div class="print-price">$${print.price.toFixed(2)}</div>
+                            <div class="print-price">${print.price.toFixed(2)}</div>
                             <button class="add-to-cart" data-id="${print.id}">Add to Cart</button>
                         </div>
-                    </div>`;
+                    </div>
+                `;
             });
+            
+            console.log('Generated HTML length:', html.length);
+            console.log('First 500 chars of HTML:', html.substring(0, 500));
+            
             gallery.innerHTML = html;
-        
+            
             document.querySelectorAll('.add-to-cart').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
                     playSound('cart');
                     this.classList.add('clicked');
                     setTimeout(() => this.classList.remove('clicked'), 600);
-                    addToCart(parseInt(this.dataset.id));
+                    addToCart(parseInt(this.getAttribute('data-id')));
                 });
             });
-        
+
             document.querySelectorAll('.print-image').forEach(img => {
                 img.addEventListener('click', function() {
                     playSound('click');
-                    openLightbox(parseInt(this.dataset.index));
+                    openLightbox(parseInt(this.getAttribute('data-index')));
                 });
             });
         }
-        
+
         function openLightbox(index) {
             currentLightboxIndex = index;
             updateLightbox();
             document.getElementById('lightbox').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         function closeLightbox() {
             document.getElementById('lightbox').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
-        
+
         function updateLightbox() {
             const print = prints[currentLightboxIndex];
-            const imageEl = document.getElementById('lightboxImage');
-            imageEl.innerHTML = print.image
-                ? `<img src="${print.image}" alt="${print.title}" style="width:100%;height:100%;object-fit:contain;">`
-                : print.symbol || '🖼️';
+            document.getElementById('lightboxImage').innerHTML = print.symbol;
             document.getElementById('lightboxTitle').textContent = print.title;
             document.getElementById('lightboxDescription').textContent = print.description;
-            document.getElementById('lightboxPrice').textContent = `$${print.price.toFixed(2)}`;
+            document.getElementById('lightboxPrice').textContent = `${print.price.toFixed(2)}`;
+            
             const addBtn = document.getElementById('lightboxAddBtn');
             addBtn.onclick = function() {
                 playSound('cart');
@@ -706,69 +761,147 @@
                 addToCart(print.id);
             };
         }
-        
-        function addToCart(id) {
-            const product = prints.find(p => p.id === id);
-            const existing = cart.find(i => i.id === id);
-            if (existing) existing.qty++;
-            else cart.push({ ...product, qty: 1 });
-            updateCart();
-        }
-        
-        function updateCart() {
-            document.getElementById('cartCount').textContent = cart.reduce((a, i) => a + i.qty, 0);
-            const cartItems = document.getElementById('cartItems');
-            if (cart.length === 0) {
-                cartItems.innerHTML = '<div class="empty-cart">Your cart is empty.</div>';
-                document.getElementById('cartTotal').textContent = '$0.00';
-                return;
-            }
-            let html = '';
-            let total = 0;
-            cart.forEach(item => {
-                total += item.price * item.qty;
-                html += `
-                    <div class="cart-item">
-                        <div class="cart-item-image">
-                            ${item.image ? `<img src="${item.image}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;">` : '🖼️'}
-                        </div>
-                        <div class="cart-item-info">
-                            <div class="cart-item-title">${item.title}</div>
-                            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
-                            <button class="remove-item" data-id="${item.id}">Remove</button>
-                        </div>
-                    </div>`;
-            });
-            cartItems.innerHTML = html;
-            document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
-            document.querySelectorAll('.remove-item').forEach(btn => {
-                btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
-            });
-        }
-        
-        function removeFromCart(id) {
-            cart = cart.filter(i => i.id !== id);
-            updateCart();
-        }
-        
-        document.getElementById('cartIcon').addEventListener('click', () => {
-            document.getElementById('cartSidebar').classList.add('open');
-        });
-        document.getElementById('closeCart').addEventListener('click', () => {
-            document.getElementById('cartSidebar').classList.remove('open');
-        });
-        document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
-        document.getElementById('lightboxPrev').addEventListener('click', () => {
-            currentLightboxIndex = (currentLightboxIndex - 1 + prints.length) % prints.length;
-            updateLightbox();
-        });
-        document.getElementById('lightboxNext').addEventListener('click', () => {
+
+        function nextImage() {
+            playSound('click');
             currentLightboxIndex = (currentLightboxIndex + 1) % prints.length;
             updateLightbox();
+        }
+
+        function prevImage() {
+            playSound('click');
+            currentLightboxIndex = (currentLightboxIndex - 1 + prints.length) % prints.length;
+            updateLightbox();
+        }
+
+        function addToCart(printId) {
+            const print = prints.find(p => p.id === printId);
+            cart.push(print);
+            updateCart();
+            
+            const cartIcon = document.getElementById('cartIcon');
+            cartIcon.style.transform = 'scale(1.2)';
+            setTimeout(() => cartIcon.style.transform = 'scale(1)', 200);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartCount = document.getElementById('cartCount');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            cartCount.textContent = cart.length;
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
+                checkoutBtn.disabled = true;
+            } else {
+                let html = '';
+                cart.forEach((item, index) => {
+                    html += `
+                        <div class="cart-item">
+                            <div class="cart-item-image">${item.symbol}</div>
+                            <div class="cart-item-info">
+                                <div class="cart-item-title">${item.title}</div>
+                                <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                                <button class="remove-item" data-index="${index}">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                cartItems.innerHTML = html;
+                
+                document.querySelectorAll('.remove-item').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        removeFromCart(parseInt(this.getAttribute('data-index')));
+                    });
+                });
+                
+                checkoutBtn.disabled = false;
+            }
+
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+        }
+
+        function toggleCart() {
+            document.getElementById('cartSidebar').classList.toggle('open');
+        }
+
+        function handleCheckout() {
+            if (cart.length === 0) return;
+            
+            console.log('Checkout button clicked, cart:', cart);
+            
+            // Prepare cart data for checkout
+            const items = cart.map(item => ({
+                name: item.title,
+                description: item.description,
+                price: item.price,
+                quantity: 1
+            }));
+            
+            console.log('Sending to API:', items);
+            
+            // Call Vercel serverless function to create checkout session
+            fetch('/api/create-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ items })
+            })
+            .then(response => {
+                console.log('API response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('API response data:', data);
+                if (data.url) {
+                    // Redirect to Stripe checkout
+                    console.log('Redirecting to:', data.url);
+                    window.location.href = data.url;
+                } else {
+                    console.error('No URL in response:', data);
+                    alert('Error creating checkout session. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Checkout error:', error);
+                alert('Error processing checkout. Please try again.');
+            });
+        }
+
+        document.getElementById('cartIcon').addEventListener('click', toggleCart);
+        document.getElementById('closeCart').addEventListener('click', toggleCart);
+        document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+        document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+        document.getElementById('lightboxPrev').addEventListener('click', prevImage);
+        document.getElementById('lightboxNext').addEventListener('click', nextImage);
+
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLightbox();
+            }
         });
-        
+
+        document.addEventListener('keydown', function(e) {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox.classList.contains('active')) {
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowRight') nextImage();
+                if (e.key === 'ArrowLeft') prevImage();
+            }
+        });
+
+        // Initialize - try to load from Google Sheets, fallback to defaults
         loadProducts();
-        </script>
-        
+        updateCart();
+    </script>
 </body>
 </html>
