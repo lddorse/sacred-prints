@@ -44,6 +44,17 @@ module.exports = async (req, res) => {
       return res.status(200).json({ url: session.url });
     }
 
+    app.get('/checkout-session', async (req, res) => {
+      const { session_id } = req.query;
+      try {
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+        res.json(session);
+      } catch (err) {
+        console.error('Error retrieving session:', err);
+        res.status(500).json({ error: 'Failed to retrieve session' });
+      }
+    });
+    
     // Allow GET requests to retrieve session details for success page
     if (req.method === 'GET') {
       const { session_id } = req.query;
