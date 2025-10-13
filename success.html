@@ -1,39 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Successful</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Successful - Sacred Prints</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      background: #fafafa;
+      padding: 50px;
+    }
+    h1 { color: #2ecc71; }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+  </style>
 </head>
 <body>
-  <h1>🎉 Payment Successful!</h1>
-  <div id="order-details">Loading order details...</div>
+  <h1>✅ Payment Successful!</h1>
+  <p>Thank you for your order. Here are your details:</p>
+  <div id="details">Loading order details...</div>
 
   <script>
     async function loadOrder() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('session_id');
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("session_id");
+      const detailsDiv = document.getElementById("details");
 
       if (!sessionId) {
-        document.getElementById('order-details').textContent = 'No session ID found.';
+        detailsDiv.textContent = "Error: Missing session ID.";
         return;
       }
 
       try {
-        const response = await fetch(`/order-details?session_id=${sessionId}`);
+        const response = await fetch(`/api/order-details?session_id=${sessionId}`);
         const data = await response.json();
 
         if (data.error) {
-          document.getElementById('order-details').textContent = 'Error loading order.';
-        } else {
-          document.getElementById('order-details').innerHTML = `
-            <p>Order Number: <strong>${data.id}</strong></p>
-            <p>Amount: <strong>$${(data.amount_total / 100).toFixed(2)}</strong></p>
-            <p>Email: <strong>${data.customer_email}</strong></p>
+          detailsDiv.textContent = "Error loading order.";
+          return;
+        }
+
+        const total = (data.amount_total / 100).toFixed(2);
+        const items = data.line_items?.data || [];
+
+        let itemList = "";
+        if (items.length > 0) {
+          itemList = `
+            <h3>Items Purchased:</h3>
+            <ul>${items.map(i => `<li>${i.description} — $${(i.amount_total / 100).toFixed(2)}</li>`).join("")}</ul>
           `;
         }
+
+        detailsDiv.innerHTML = `
+          <p><strong>Order ID:</strong> ${data.id}</p>
+          <p><strong>Total Paid:</strong> $${total}</p>
+          ${itemList}
+        `;
       } catch (err) {
-        document.getElementById('order-details').textContent = 'Error loading order.';
+        console.error(err);
+        detailsDiv.textContent = "Error loading order.";
       }
     }
 
