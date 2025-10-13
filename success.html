@@ -1,57 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Order Successful</title>
-<style>
-  body {
-    font-family: system-ui, sans-serif;
-    text-align: center;
-    padding: 60px;
-    background: #fafafa;
-  }
-  .success-box {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    display: inline-block;
-  }
-  h1 { color: #2c7a2c; }
-  p { color: #333; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful</title>
 </head>
 <body>
-  <div class="success-box">
-    <h1>✅ Payment Successful!</h1>
-    <p>Thank you for your order. Your order number is:</p>
-    <h2 id="orderId">Loading...</h2>
-    <p>You’ll receive a confirmation email shortly.</p>
-    <a href="/">Return to Gallery</a>
-  </div>
+  <h1>🎉 Payment Successful!</h1>
+  <div id="order-details">Loading order details...</div>
 
   <script>
-    // Extract session_id from URL
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
+    async function loadOrder() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
 
-    async function fetchSession() {
       if (!sessionId) {
-        document.getElementById('orderId').textContent = 'Unknown';
+        document.getElementById('order-details').textContent = 'No session ID found.';
         return;
       }
+
       try {
-        const response = await fetch(`/checkout-session?session_id=${sessionId}`);
-        const session = await response.json();
-        // Display the Stripe session ID as order number
-        document.getElementById('orderId').textContent = session.id || 'Unavailable';
-      } catch (error) {
-        console.error('Error fetching session:', error);
-        document.getElementById('orderId').textContent = 'Error loading order';
+        const response = await fetch(`/order-details?session_id=${sessionId}`);
+        const data = await response.json();
+
+        if (data.error) {
+          document.getElementById('order-details').textContent = 'Error loading order.';
+        } else {
+          document.getElementById('order-details').innerHTML = `
+            <p>Order Number: <strong>${data.id}</strong></p>
+            <p>Amount: <strong>$${(data.amount_total / 100).toFixed(2)}</strong></p>
+            <p>Email: <strong>${data.customer_email}</strong></p>
+          `;
+        }
+      } catch (err) {
+        document.getElementById('order-details').textContent = 'Error loading order.';
       }
     }
-    fetchSession();
+
+    loadOrder();
   </script>
 </body>
 </html>
