@@ -680,7 +680,6 @@
         
             document.querySelectorAll('.add-to-cart').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    playSound('cart');
                     this.classList.add('clicked');
                     setTimeout(() => this.classList.remove('clicked'), 600);
                     addToCart(parseInt(this.dataset.id));
@@ -689,7 +688,6 @@
         
             document.querySelectorAll('.print-image').forEach(img => {
                 img.addEventListener('click', function() {
-                    playSound('click');
                     openLightbox(parseInt(this.dataset.index));
                 });
             });
@@ -718,7 +716,6 @@
             document.getElementById('lightboxPrice').textContent = `$${print.price.toFixed(2)}`;
             const addBtn = document.getElementById('lightboxAddBtn');
             addBtn.onclick = function() {
-                playSound('cart');
                 this.classList.add('clicked');
                 setTimeout(() => this.classList.remove('clicked'), 600);
                 addToCart(print.id);
