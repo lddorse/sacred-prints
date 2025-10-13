@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Successful</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    text-align: center;
+    padding: 60px;
+    background: #fafafa;
+  }
+  .success-box {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: inline-block;
+  }
+  h1 { color: #2c7a2c; }
+  p { color: #333; }
+</style>
+</head>
+<body>
+  <div class="success-box">
+    <h1>✅ Payment Successful!</h1>
+    <p>Thank you for your order. Your order number is:</p>
+    <h2 id="orderId">Loading...</h2>
+    <p>You’ll receive a confirmation email shortly.</p>
+    <a href="/">Return to Gallery</a>
+  </div>
+
+  <script>
+    // Extract session_id from URL
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+
+    async function fetchSession() {
+      if (!sessionId) {
+        document.getElementById('orderId').textContent = 'Unknown';
+        return;
+      }
+      try {
+        const response = await fetch(`/checkout-session?session_id=${sessionId}`);
+        const session = await response.json();
+        // Display the Stripe session ID as order number
+        document.getElementById('orderId').textContent = session.id || 'Unavailable';
+      } catch (error) {
+        console.error('Error fetching session:', error);
+        document.getElementById('orderId').textContent = 'Error loading order';
+      }
+    }
+    fetchSession();
+  </script>
+</body>
+</html>
