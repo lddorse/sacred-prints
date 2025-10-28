@@ -143,6 +143,33 @@
             line-height: 1.5;
         }
 
+        .size-selector {
+            margin-bottom: 1rem;
+        }
+
+        .size-selector label {
+            display: block;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 0.3rem;
+        }
+
+        .size-selector select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #ecf0f1;
+            border-radius: 5px;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .size-selector select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
         .print-price {
             font-size: 1.5rem;
             color: #27ae60;
@@ -175,22 +202,29 @@
             transform: scale(0.95);
         }
 
-        .add-to-cart::after {
+        .add-to-cart.clicked::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 0;
-            height: 0;
+            width: 300px;
+            height: 300px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.5);
             transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            animation: ripple 0.6s;
         }
 
-        .add-to-cart.clicked::after {
-            width: 300px;
-            height: 300px;
+        @keyframes ripple {
+            from {
+                width: 0;
+                height: 0;
+            }
+            to {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+            }
         }
 
         .cart-sidebar {
@@ -273,6 +307,12 @@
 
         .cart-item-title {
             font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .cart-item-size {
+            font-size: 0.9rem;
+            color: #7f8c8d;
             margin-bottom: 0.3rem;
         }
 
@@ -402,6 +442,28 @@
             opacity: 0.9;
         }
 
+        .lightbox-size-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .lightbox-size-selector label {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .lightbox-size-selector select {
+            padding: 0.7rem 1rem;
+            border: 2px solid white;
+            border-radius: 5px;
+            font-family: 'Georgia', serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            min-width: 200px;
+        }
+
         .lightbox-price {
             font-size: 1.8rem;
             color: #2ecc71;
@@ -418,8 +480,6 @@
             cursor: pointer;
             transition: all 0.3s;
             font-family: 'Georgia', serif;
-            position: relative;
-            overflow: hidden;
         }
 
         .lightbox-add-btn:hover {
@@ -430,24 +490,6 @@
 
         .lightbox-add-btn:active {
             transform: scale(0.95);
-        }
-
-        .lightbox-add-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .lightbox-add-btn.clicked::after {
-            width: 300px;
-            height: 300px;
         }
 
         .lightbox-close {
@@ -573,6 +615,10 @@
             <div class="lightbox-info">
                 <h2 class="lightbox-title" id="lightboxTitle"></h2>
                 <p class="lightbox-description" id="lightboxDescription"></p>
+                <div class="lightbox-size-selector">
+                    <label>Select Size:</label>
+                    <select id="lightboxSizeSelect"></select>
+                </div>
                 <div class="lightbox-price" id="lightboxPrice"></div>
                 <button class="lightbox-add-btn" id="lightboxAddBtn">Add to Cart</button>
             </div>
@@ -604,9 +650,10 @@
             }
         }
         
-        let prints = [];
+        let allProducts = []; // All size variations
+        let groupedProducts = {}; // Products grouped by title
         let cart = [];
-        let currentLightboxIndex = 0;
+        let currentLightboxProduct = null;
         
         async function loadProducts() {
             if (!SHEET_URL) return loadDefaultProducts();
@@ -614,9 +661,8 @@
                 const response = await fetch(SHEET_URL);
                 const csvText = await response.text();
                 const lines = csvText.trim().split('\n');
-                const headers = lines[0].split(',').map(h => h.trim());
         
-                prints = lines.slice(1)
+                allProducts = lines.slice(1)
                     .filter(line => line.trim())
                     .map((line, index) => {
                         const values = [];
@@ -630,15 +676,21 @@
                             } else current += char;
                         }
                         values.push(current.trim());
+                        
+                        // New format: id, title, size, description, price, image_url, available
                         return {
                             id: parseInt(values[0]) || index + 1,
                             title: values[1] || 'Untitled',
-                            description: values[2] || 'No description',
-                            price: parseFloat(values[3]) || 15.00,
-                            image: values[4] || '',
-                            symbol: values[5] || ''
+                            size: values[2] || '8x8',
+                            description: values[3] || 'No description',
+                            price: parseFloat(values[4]) || 15.00,
+                            image: values[5] || '',
+                            available: values[6]?.toLowerCase() === 'true' || values[6] === '1' || values[6] === 'TRUE'
                         };
-                    });
+                    })
+                    .filter(p => p.available); // Only show available sizes
+                
+                groupProductsByTitle();
                 renderGallery();
             } catch (e) {
                 console.error('Error loading products:', e);
@@ -646,55 +698,114 @@
             }
         }
         
+        function groupProductsByTitle() {
+            groupedProducts = {};
+            allProducts.forEach(product => {
+                if (!groupedProducts[product.title]) {
+                    groupedProducts[product.title] = {
+                        title: product.title,
+                        description: product.description,
+                        image: product.image,
+                        sizes: []
+                    };
+                }
+                groupedProducts[product.title].sizes.push({
+                    id: product.id,
+                    size: product.size,
+                    price: product.price
+                });
+            });
+        }
+        
         function loadDefaultProducts() {
-            prints = [
-                { id: 1, title: "Divine Light", description: "A serene depiction of heavenly illumination", price: 15.00, image: "https://picsum.photos/seed/light/600/400" },
-                { id: 2, title: "Prayer in Silence", description: "Peaceful moment of contemplation", price: 15.00, image: "https://picsum.photos/seed/prayer/600/400" },
-                { id: 3, title: "Sacred Heart", description: "Symbol of divine love and compassion", price: 18.00, image: "https://picsum.photos/seed/heart/600/400" },
-                { id: 4, title: "Angels Above", description: "Celestial beings watching over", price: 20.00, image: "https://picsum.photos/seed/angel/600/400" },
-                { id: 5, title: "The Cross", description: "Timeless symbol of faith and hope", price: 15.00, image: "https://picsum.photos/seed/cross/600/400" },
+            allProducts = [
+                { id: 1, title: "Divine Light", size: "8x8", description: "A serene depiction of heavenly illumination", price: 15.00, image: "https://picsum.photos/seed/light/600/400", available: true },
+                { id: 2, title: "Divine Light", size: "12x12", description: "A serene depiction of heavenly illumination", price: 20.00, image: "https://picsum.photos/seed/light/600/400", available: true },
+                { id: 3, title: "Prayer in Silence", size: "8x8", description: "Peaceful moment of contemplation", price: 15.00, image: "https://picsum.photos/seed/prayer/600/400", available: true },
             ];
+            groupProductsByTitle();
             renderGallery();
         }
         
         function renderGallery() {
             const gallery = document.getElementById('gallery');
             let html = '';
-            prints.forEach((print, index) => {
+            
+            Object.values(groupedProducts).forEach((product, index) => {
+                // Sort sizes and get the smallest price
+                const sortedSizes = product.sizes.sort((a, b) => a.price - b.price);
+                const startingPrice = sortedSizes[0].price;
+                
                 html += `
                     <div class="print-card">
-                        <div class="print-image" data-index="${index}">
-                            ${print.image 
-                                ? `<img src="${print.image}" alt="${print.title}">`
-                                : print.symbol || '🖼️'}
+                        <div class="print-image" data-title="${product.title}">
+                            ${product.image 
+                                ? `<img src="${product.image}" alt="${product.title}">`
+                                : '🖼️'}
                         </div>
                         <div class="print-info">
-                            <h3 class="print-title">${print.title}</h3>
-                            <p class="print-description">${print.description}</p>
-                            <div class="print-price">$${print.price.toFixed(2)}</div>
-                            <button class="add-to-cart" data-id="${print.id}">Add to Cart</button>
+                            <h3 class="print-title">${product.title}</h3>
+                            <p class="print-description">${product.description}</p>
+                            <div class="size-selector">
+                                <label>Size:</label>
+                                <select class="size-select" data-title="${product.title}">
+                                    ${product.sizes.map(s => `<option value="${s.size}" data-price="${s.price}">${s.size}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="print-price" data-title="${product.title}">$${startingPrice.toFixed(2)}</div>
+                            <button class="add-to-cart" data-title="${product.title}">Add to Cart</button>
                         </div>
                     </div>`;
             });
+            
             gallery.innerHTML = html;
+        
+            // Update price when size changes
+            document.querySelectorAll('.size-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const price = parseFloat(selectedOption.dataset.price);
+                    const priceEl = document.querySelector(`.print-price[data-title="${this.dataset.title}"]`);
+                    priceEl.textContent = `$${price.toFixed(2)}`;
+                });
+            });
         
             document.querySelectorAll('.add-to-cart').forEach(btn => {
                 btn.addEventListener('click', function() {
+                    playSound('cart');
                     this.classList.add('clicked');
                     setTimeout(() => this.classList.remove('clicked'), 600);
-                    addToCart(parseInt(this.dataset.id));
+                    
+                    const title = this.dataset.title;
+                    const sizeSelect = document.querySelector(`.size-select[data-title="${title}"]`);
+                    const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+                    const size = selectedOption.value;
+                    const price = parseFloat(selectedOption.dataset.price);
+                    
+                    const product = groupedProducts[title];
+                    const sizeData = product.sizes.find(s => s.size === size);
+                    
+                    addToCart({
+                        id: sizeData.id,
+                        title: title,
+                        size: size,
+                        price: price,
+                        image: product.image,
+                        description: product.description
+                    });
                 });
             });
         
             document.querySelectorAll('.print-image').forEach(img => {
                 img.addEventListener('click', function() {
-                    openLightbox(parseInt(this.dataset.index));
+                    playSound('click');
+                    openLightbox(this.dataset.title);
                 });
             });
         }
         
-        function openLightbox(index) {
-            currentLightboxIndex = index;
+        function openLightbox(title) {
+            currentLightboxProduct = groupedProducts[title];
             updateLightbox();
             document.getElementById('lightbox').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -706,27 +817,61 @@
         }
         
         function updateLightbox() {
-            const print = prints[currentLightboxIndex];
+            if (!currentLightboxProduct) return;
+            
             const imageEl = document.getElementById('lightboxImage');
-            imageEl.innerHTML = print.image
-                ? `<img src="${print.image}" alt="${print.title}">`
-                : print.symbol || '🖼️';
-            document.getElementById('lightboxTitle').textContent = print.title;
-            document.getElementById('lightboxDescription').textContent = print.description;
-            document.getElementById('lightboxPrice').textContent = `$${print.price.toFixed(2)}`;
+            imageEl.innerHTML = currentLightboxProduct.image
+                ? `<img src="${currentLightboxProduct.image}" alt="${currentLightboxProduct.title}">`
+                : '🖼️';
+            
+            document.getElementById('lightboxTitle').textContent = currentLightboxProduct.title;
+            document.getElementById('lightboxDescription').textContent = currentLightboxProduct.description;
+            
+            // Populate size dropdown
+            const sizeSelect = document.getElementById('lightboxSizeSelect');
+            sizeSelect.innerHTML = currentLightboxProduct.sizes
+                .map(s => `<option value="${s.size}" data-price="${s.price}">${s.size} - $${s.price.toFixed(2)}</option>`)
+                .join('');
+            
+            // Set initial price
+            const firstSize = currentLightboxProduct.sizes[0];
+            document.getElementById('lightboxPrice').textContent = `$${firstSize.price.toFixed(2)}`;
+            
+            // Update price when size changes
+            sizeSelect.onchange = function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = parseFloat(selectedOption.dataset.price);
+                document.getElementById('lightboxPrice').textContent = `$${price.toFixed(2)}`;
+            };
+            
             const addBtn = document.getElementById('lightboxAddBtn');
             addBtn.onclick = function() {
-                this.classList.add('clicked');
-                setTimeout(() => this.classList.remove('clicked'), 600);
-                addToCart(print.id);
+                playSound('cart');
+                const sizeSelect = document.getElementById('lightboxSizeSelect');
+                const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+                const size = selectedOption.value;
+                const price = parseFloat(selectedOption.dataset.price);
+                const sizeData = currentLightboxProduct.sizes.find(s => s.size === size);
+                
+                addToCart({
+                    id: sizeData.id,
+                    title: currentLightboxProduct.title,
+                    size: size,
+                    price: price,
+                    image: currentLightboxProduct.image,
+                    description: currentLightboxProduct.description
+                });
             };
         }
         
-        function addToCart(id) {
-            const product = prints.find(p => p.id === id);
-            const existing = cart.find(i => i.id === id);
-            if (existing) existing.qty++;
-            else cart.push({ ...product, qty: 1 });
+        function addToCart(product) {
+            // Check if exact same item (title + size) already in cart
+            const existing = cart.find(i => i.title === product.title && i.size === product.size);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
             updateCart();
         }
         
@@ -745,7 +890,7 @@
             checkoutBtn.disabled = false;
             let html = '';
             let total = 0;
-            cart.forEach(item => {
+            cart.forEach((item, idx) => {
                 total += item.price * item.qty;
                 html += `
                     <div class="cart-item">
@@ -753,21 +898,22 @@
                             ${item.image ? `<img src="${item.image}" alt="${item.title}">` : '🖼️'}
                         </div>
                         <div class="cart-item-info">
-                            <div class="cart-item-title">${item.title} (x${item.qty})</div>
-                            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
-                            <button class="remove-item" data-id="${item.id}">Remove</button>
+                            <div class="cart-item-title">${item.title}${item.qty > 1 ? ` (x${item.qty})` : ''}</div>
+                            <div class="cart-item-size">Size: ${item.size}</div>
+                            <div class="cart-item-price">${(item.price * item.qty).toFixed(2)}</div>
+                            <button class="remove-item" data-index="${idx}">Remove</button>
                         </div>
                     </div>`;
             });
             cartItems.innerHTML = html;
-            document.getElementById('cartTotal').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('cartTotal').textContent = `${total.toFixed(2)}`;
             document.querySelectorAll('.remove-item').forEach(btn => {
-                btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
+                btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.index)));
             });
         }
         
-        function removeFromCart(id) {
-            cart = cart.filter(i => i.id !== id);
+        function removeFromCart(index) {
+            cart.splice(index, 1);
             updateCart();
         }
         
@@ -777,7 +923,7 @@
             console.log('Checkout clicked, cart:', cart);
             
             const items = cart.map(item => ({
-                name: item.title,
+                name: `${item.title} (${item.size})`,
                 description: item.description,
                 price: item.price,
                 quantity: item.qty
@@ -824,13 +970,19 @@
         
         document.getElementById('lightboxPrev').addEventListener('click', () => {
             playSound('click');
-            currentLightboxIndex = (currentLightboxIndex - 1 + prints.length) % prints.length;
+            const titles = Object.keys(groupedProducts);
+            const currentIndex = titles.indexOf(currentLightboxProduct.title);
+            const prevIndex = (currentIndex - 1 + titles.length) % titles.length;
+            currentLightboxProduct = groupedProducts[titles[prevIndex]];
             updateLightbox();
         });
         
         document.getElementById('lightboxNext').addEventListener('click', () => {
             playSound('click');
-            currentLightboxIndex = (currentLightboxIndex + 1) % prints.length;
+            const titles = Object.keys(groupedProducts);
+            const currentIndex = titles.indexOf(currentLightboxProduct.title);
+            const nextIndex = (currentIndex + 1) % titles.length;
+            currentLightboxProduct = groupedProducts[titles[nextIndex]];
             updateLightbox();
         });
         
@@ -844,12 +996,18 @@
                 if (e.key === 'Escape') closeLightbox();
                 if (e.key === 'ArrowRight') {
                     playSound('click');
-                    currentLightboxIndex = (currentLightboxIndex + 1) % prints.length;
+                    const titles = Object.keys(groupedProducts);
+                    const currentIndex = titles.indexOf(currentLightboxProduct.title);
+                    const nextIndex = (currentIndex + 1) % titles.length;
+                    currentLightboxProduct = groupedProducts[titles[nextIndex]];
                     updateLightbox();
                 }
                 if (e.key === 'ArrowLeft') {
                     playSound('click');
-                    currentLightboxIndex = (currentLightboxIndex - 1 + prints.length) % prints.length;
+                    const titles = Object.keys(groupedProducts);
+                    const currentIndex = titles.indexOf(currentLightboxProduct.title);
+                    const prevIndex = (currentIndex - 1 + titles.length) % titles.length;
+                    currentLightboxProduct = groupedProducts[titles[prevIndex]];
                     updateLightbox();
                 }
             }
