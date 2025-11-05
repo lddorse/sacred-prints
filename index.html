@@ -77,6 +77,127 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
+        .nav-links {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 101;
+            opacity: 0;
+            transition: all 0.3s;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links.visible {
+            opacity: 1;
+        }
+
+        .nav-links a {
+            color: #34495e;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #3498db;
+        }
+
+        .nav-links a.active {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .about-page {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .about-page.active {
+            display: block;
+        }
+
+        .about-hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .about-image {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 5px solid white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 6rem;
+        }
+
+        .about-hero h2 {
+            font-size: 2.5rem;
+            color: #34495e;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .about-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .about-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .highlight-box h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 400;
+        }
+
+        .contact-info {
+            background: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .contact-info a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
         h1 {
             font-size: 2.5rem;
             color: #34495e;
@@ -457,12 +578,49 @@
         <span>Sacred Prints</span>
     </a>
 
+    <nav class="nav-links" id="navLinks">
+        <a href="#" class="nav-link active" data-page="shop">Shop</a>
+        <a href="#" class="nav-link" data-page="about">About</a>
+    </nav>
+
     <div class="cart-icon" id="cartIcon">
         &#128722;
         <span class="cart-count" id="cartCount">0</span>
     </div>
 
-    <div class="container">
+    <div class="shop-page" id="shopPage">
+        <div class="container">
+            <div class="gallery" id="gallery"></div>
+        </div>
+    </div>
+
+    <div class="about-page" id="aboutPage">
+        <div class="about-hero">
+            <img src="https://i.ibb.co/0jFF7mBL/I-am-the-Puppet-of-God.png" alt="God's Puppet" class="about-image">
+            <h2>About God's Puppet</h2>
+        </div>
+        
+        <div class="about-content">
+            <p>Hi, I am God's Puppet. I had really never drawn before June of 2025. I prayed to have a voice, to be able to share my faith with as many people as possible, and to help people. God urged me to start drawing, and you can see through results!</p>
+            
+            <div class="highlight-box">
+                <h3>🙏 Giving Back 🙏</h3>
+                <p>For any prints purchased from Sacred-Prints.com, <strong>50% of the profit will go to a charity</strong>. Typically the charities will include churches, food banks, shelters, and supporting mothers in crisis.</p>
+            </div>
+            
+            <p>You will receive an email confirmation from <a href="mailto:GodsPuppet@mail.com">GodsPuppet@mail.com</a>, so if you have a preference in the general category of a charity, let me know, I'll do my best to honor your request.</p>
+            
+            <p>The shipping rate is $5.00 per order, no matter how many prints you have printed.</p>
+            
+            <p><strong>Thank you for sharing the website, and May God bless you!</strong></p>
+            
+            <div class="contact-info">
+                <p>📧 Contact: <a href="mailto:GodsPuppet@mail.com">GodsPuppet@mail.com</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="display:none;">
         <div class="gallery" id="gallery"></div>
     </div>
 
@@ -762,13 +920,16 @@
             const currentScroll = window.pageYOffset;
             const header = document.getElementById('header');
             const logo = document.getElementById('siteLogo');
+            const navLinks = document.getElementById('navLinks');
             
             if (currentScroll > 100) {
                 header.classList.add('scrolled');
                 logo.classList.add('visible');
+                navLinks.classList.add('visible');
             } else {
                 header.classList.remove('scrolled');
                 logo.classList.remove('visible');
+                navLinks.classList.remove('visible');
             }
             
             lastScroll = currentScroll;
@@ -777,7 +938,43 @@
         // Smooth scroll to top when logo clicked
         document.getElementById('siteLogo').addEventListener('click', (e) => {
             e.preventDefault();
+            switchPage('shop');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Page navigation
+        function switchPage(page) {
+            // Hide all pages
+            document.getElementById('shopPage').classList.remove('active');
+            document.getElementById('aboutPage').classList.remove('active');
+            
+            // Show selected page
+            if (page === 'shop') {
+                document.getElementById('shopPage').style.display = 'block';
+                document.getElementById('aboutPage').style.display = 'none';
+            } else if (page === 'about') {
+                document.getElementById('shopPage').style.display = 'none';
+                document.getElementById('aboutPage').classList.add('active');
+            }
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === page) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Nav link click handlers
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage(link.dataset.page);
+            });
         });
     </script>
 </body>
