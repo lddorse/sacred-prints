@@ -47,7 +47,7 @@
 
         .site-logo {
             position: fixed;
-            top: 1rem;
+            top: 1.5rem;
             left: 2rem;
             background: white;
             color: #34495e;
@@ -59,8 +59,9 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             z-index: 101;
             opacity: 0;
-            transform: translateX(-100px);
-            transition: all 0.3s;
+            pointer-events: none;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -69,32 +70,36 @@
 
         .site-logo.visible {
             opacity: 1;
-            transform: translateX(0);
+            pointer-events: all;
+            transform: translateY(0);
         }
 
         .site-logo:hover {
-            transform: translateX(0) translateY(-2px);
+            transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         .nav-links {
             position: fixed;
-            top: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 1.5rem;
+            left: 2rem;
             background: white;
-            padding: 0.8rem 2rem;
+            padding: 0.8rem 1.5rem;
             border-radius: 50px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 101;
-            opacity: 0;
-            transition: all 0.3s;
+            z-index: 102;
             display: flex;
             gap: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
         }
 
         .nav-links.visible {
             opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
         }
 
         .nav-links a {
@@ -102,6 +107,7 @@
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s;
+            font-size: 1.1rem;
         }
 
         .nav-links a:hover {
@@ -573,11 +579,6 @@
         </div>
     </header>
 
-    <a href="#" class="site-logo" id="siteLogo">
-        <span>✨</span>
-        <span>Sacred Prints</span>
-    </a>
-
     <nav class="nav-links" id="navLinks">
         <a href="#" class="nav-link active" data-page="shop">Shop</a>
         <a href="#" class="nav-link" data-page="about">About</a>
@@ -596,7 +597,7 @@
 
     <div class="about-page" id="aboutPage">
         <div class="about-hero">
-            <img src="https://i.ibb.co/0jFF7mBL/I-am-the-Puppet-of-God.png" alt="God's Puppet" class="about-image">
+            <div class="about-image">🙏</div>
             <h2>About God's Puppet</h2>
         </div>
         
@@ -641,6 +642,7 @@
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';
+        const ABOUT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?gid=1&output=csv';
         
         function playSound(type) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -916,47 +918,38 @@
         
         // Scroll behavior for header
         let lastScroll = 0;
+        let scrollTimeout;
+        
         window.addEventListener('scroll', () => {
             const currentScroll = window.pageYOffset;
             const header = document.getElementById('header');
-            const logo = document.getElementById('siteLogo');
             const navLinks = document.getElementById('navLinks');
             
-            if (currentScroll > 100) {
-                header.classList.add('scrolled');
-                logo.classList.add('visible');
-                navLinks.classList.add('visible');
-            } else {
-                header.classList.remove('scrolled');
-                logo.classList.remove('visible');
-                navLinks.classList.remove('visible');
-            }
+            // Clear existing timeout
+            clearTimeout(scrollTimeout);
+            
+            // Debounce scroll updates for smoother transitions
+            scrollTimeout = setTimeout(() => {
+                if (currentScroll > 150) {
+                    header.classList.add('scrolled');
+                    navLinks.classList.add('visible');
+                } else {
+                    header.classList.remove('scrolled');
+                    navLinks.classList.remove('visible');
+                }
+            }, 10);
             
             lastScroll = currentScroll;
         });
         
-        // Smooth scroll to top when logo clicked
-        document.getElementById('siteLogo').addEventListener('click', (e) => {
-            e.preventDefault();
+        // Navigate to shop when header title is clicked
+        document.querySelector('header h1').addEventListener('click', () => {
             switchPage('shop');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
         
         // Page navigation
         function switchPage(page) {
-            // Hide all pages
-            document.getElementById('shopPage').classList.remove('active');
-            document.getElementById('aboutPage').classList.remove('active');
-            
-            // Show selected page
-            if (page === 'shop') {
-                document.getElementById('shopPage').style.display = 'block';
-                document.getElementById('aboutPage').style.display = 'none';
-            } else if (page === 'about') {
-                document.getElementById('shopPage').style.display = 'none';
-                document.getElementById('aboutPage').classList.add('active');
-            }
-            
             // Update nav links
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
@@ -964,6 +957,15 @@
                     link.classList.add('active');
                 }
             });
+            
+            // Show selected page
+            if (page === 'shop') {
+                document.getElementById('shopPage').style.display = 'block';
+                document.getElementById('aboutPage').style.display = 'none';
+            } else if (page === 'about') {
+                document.getElementById('shopPage').style.display = 'none';
+                document.getElementById('aboutPage').style.display = 'block';
+            }
             
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
