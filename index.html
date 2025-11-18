@@ -204,6 +204,75 @@
             text-decoration: underline;
         }
 
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+            line-height: 1.2;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            opacity: 0.95;
+        }
+
+        .hero-highlight {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .hero-cta {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h2 {
+                font-size: 2rem;
+            }
+
+            .hero-section p {
+                font-size: 1.1rem;
+            }
+
+            .hero-highlight {
+                font-size: 1.1rem;
+            }
+        }
+
         h1 {
             font-size: 2.5rem;
             color: #34495e;
@@ -590,6 +659,18 @@
     </div>
 
     <div class="shop-page" id="shopPage">
+        <section class="hero-section">
+            <div class="hero-content">
+                <h2>Faith-Inspired Digital Art Prints</h2>
+                <p>Discover beautiful, hand-drawn religious artwork created through divine inspiration. Each print is a unique expression of faith, designed to bring peace and spirituality into your sacred space.</p>
+                <div class="hero-highlight">
+                    🙏 50% of profits support churches, food banks, shelters, and mothers in crisis
+                </div>
+                <p>Available in multiple sizes • Shipped in protective tubes • $5 flat rate shipping</p>
+                <a href="#gallery" class="hero-cta" onclick="document.getElementById('gallery').scrollIntoView({behavior: 'smooth'}); return false;">Browse Prints</a>
+            </div>
+        </section>
+        
         <div class="container">
             <div class="gallery" id="gallery"></div>
         </div>
@@ -641,8 +722,8 @@
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?gid=0&single=true&output=csv';
-        const ABOUT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?gid=1534856182&single=true&output=csv';
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';
+        const ABOUT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?gid=1&output=csv';
         
         function playSound(type) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -668,6 +749,70 @@
         let allProducts = []; // All size variations
         let groupedProducts = {}; // Products grouped by title
         let cart = [];
+        let aboutData = {};
+        
+        async function loadAboutPage() {
+            try {
+                const response = await fetch(ABOUT_SHEET_URL);
+                const csvText = await response.text();
+                const lines = csvText.trim().split('\n');
+                
+                // Parse about data (format: field, value)
+                lines.slice(1).forEach(line => {
+                    const parts = line.split(',');
+                    const field = parts[0]?.trim();
+                    const value = parts.slice(1).join(',').trim().replace(/^"|"$/g, '');
+                    if (field && value) {
+                        aboutData[field] = value;
+                    }
+                });
+                
+                renderAboutPage();
+            } catch (e) {
+                console.error('Error loading about page:', e);
+                // Keep default content if fails
+            }
+        }
+        
+        function renderAboutPage() {
+            if (Object.keys(aboutData).length === 0) return;
+            
+            const aboutPage = document.getElementById('aboutPage');
+            const imageUrl = aboutData.image_url || '';
+            const name = aboutData.name || "God's Puppet";
+            const bio = aboutData.bio || '';
+            const charity_percent = aboutData.charity_percent || '50%';
+            const charity_text = aboutData.charity_text || '';
+            const shipping_text = aboutData.shipping_text || 'The shipping rate is $5.00 per order, no matter how many prints you have printed.';
+            const closing = aboutData.closing || 'Thank you for sharing the website, and May God bless you!';
+            const email = aboutData.email || 'GodsPuppet@mail.com';
+            
+            aboutPage.innerHTML = `
+                <div class="about-hero">
+                    ${imageUrl ? `<img src="${imageUrl}" alt="${name}" class="about-image" style="display:block;">` : '<div class="about-image">🙏</div>'}
+                    <h2>About ${name}</h2>
+                </div>
+                
+                <div class="about-content">
+                    <p>${bio}</p>
+                    
+                    <div class="highlight-box">
+                        <h3>🙏 Giving Back 🙏</h3>
+                        <p>For any prints purchased from Sacred-Prints.com, <strong>${charity_percent} of the profit will go to a charity</strong>. ${charity_text}</p>
+                    </div>
+                    
+                    <p>You will receive an email confirmation from <a href="mailto:${email}">${email}</a>, so if you have a preference in the general category of a charity, let me know, I'll do my best to honor your request.</p>
+                    
+                    <p>${shipping_text}</p>
+                    
+                    <p><strong>${closing}</strong></p>
+                    
+                    <div class="contact-info">
+                        <p>📧 Contact: <a href="mailto:${email}">${email}</a></p>
+                    </div>
+                </div>
+            `;
+        }
         
         async function loadProducts() {
             if (!SHEET_URL) return loadDefaultProducts();
@@ -914,6 +1059,7 @@
         document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
         
         loadProducts();
+        loadAboutPage();
         updateCart();
         
         // Scroll behavior for header
