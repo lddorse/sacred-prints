@@ -964,25 +964,42 @@
 
             // Add click handlers for image lightbox
             document.querySelectorAll('.print-image').forEach(img => {
-                img.addEventListener('click', function() {
+                img.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on the actual img element inside
+                    if (e.target.tagName === 'IMG') {
+                        e.stopPropagation();
+                    }
+                    
                     const title = this.dataset.title;
                     const product = groupedProducts[title];
-                    if (product.image) {
+                    
+                    console.log('Image clicked:', title, product);
+                    
+                    if (product && product.image) {
                         openImageLightbox(product.image, product.title);
+                    } else {
+                        console.log('No image URL found for:', title);
                     }
                 });
             });
         }
 
         function openImageLightbox(imageUrl, title) {
-            document.getElementById('lightboxImg').src = imageUrl;
-            document.getElementById('lightboxTitle').textContent = title;
-            document.getElementById('imageLightbox').classList.add('active');
+            console.log('Opening lightbox with:', imageUrl, title);
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxTitle = document.getElementById('lightboxTitle');
+            const lightbox = document.getElementById('imageLightbox');
+            
+            lightboxImg.src = imageUrl;
+            lightboxTitle.textContent = title;
+            lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeImageLightbox() {
-            document.getElementById('imageLightbox').classList.remove('active');
+            console.log('Closing lightbox');
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
         
@@ -1088,10 +1105,13 @@
         
         document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
         
-        document.getElementById('imageLightboxClose').addEventListener('click', closeImageLightbox);
+        document.getElementById('imageLightboxClose').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeImageLightbox();
+        });
         
         document.getElementById('imageLightbox').addEventListener('click', (e) => {
-            if (e.target.id === 'imageLightbox') {
+            if (e.target.id === 'imageLightbox' || e.target.classList.contains('image-lightbox-close')) {
                 closeImageLightbox();
             }
         });
