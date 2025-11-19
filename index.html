@@ -537,7 +537,7 @@
             height: 80px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 5px;
-            display: block;
+            display: flex;
             align-items: center;
             justify-content: center;
             color: white;
@@ -1012,8 +1012,15 @@
         function closeImageLightbox() {
             console.log('Closing lightbox');
             const lightbox = document.getElementById('imageLightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            
             lightbox.classList.remove('active');
             document.body.style.overflow = 'auto';
+            
+            // Clear the image src to fully reset
+            setTimeout(() => {
+                lightboxImg.src = '';
+            }, 300);
         }
         
         function addToCart(product) {
