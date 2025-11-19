@@ -724,7 +724,9 @@
 
     <div class="image-lightbox" id="imageLightbox">
         <button class="image-lightbox-close" id="imageLightboxClose">&times;</button>
-        <img id="lightboxImg" src="" alt="">
+        <div class="image-lightbox-content">
+            <img id="lightboxImg" src="" alt="">
+        </div>
         <div class="image-lightbox-title" id="lightboxTitle"></div>
     </div>
 
@@ -990,10 +992,21 @@
             const lightboxTitle = document.getElementById('lightboxTitle');
             const lightbox = document.getElementById('imageLightbox');
             
+            // Set image source and wait for it to load
+            lightboxImg.onload = () => {
+                console.log('Image loaded successfully');
+            };
+            lightboxImg.onerror = () => {
+                console.error('Image failed to load:', imageUrl);
+            };
+            
             lightboxImg.src = imageUrl;
+            lightboxImg.alt = title;
             lightboxTitle.textContent = title;
             lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            console.log('Lightbox should be visible now');
         }
 
         function closeImageLightbox() {
