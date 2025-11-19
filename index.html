@@ -1015,12 +1015,14 @@
             const lightboxImg = document.getElementById('lightboxImg');
             
             lightbox.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
             
             // Clear the image src to fully reset
             setTimeout(() => {
-                lightboxImg.src = '';
-            }, 300);
+                if (!lightbox.classList.contains('active')) {
+                    lightboxImg.src = '';
+                }
+            }, 100);
         }
         
         function addToCart(product) {
