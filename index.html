@@ -363,7 +363,6 @@
             color: white;
             overflow: hidden;
             transition: transform 0.3s;
-            cursor: pointer;
         }
 
         .print-image:hover {
@@ -722,14 +721,6 @@
         </div>
     </div>
 
-    <div class="image-lightbox" id="imageLightbox">
-        <button class="image-lightbox-close" id="imageLightboxClose">&times;</button>
-        <div class="image-lightbox-content">
-            <img id="lightboxImg" src="" alt="">
-        </div>
-        <div class="image-lightbox-title" id="lightboxTitle"></div>
-    </div>
-
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?output=csv';
         const ABOUT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwPJ3rYCgvFceQCdkYNUb08-qjk8NYsmxun3I0tGARKbtmlUiJF2aoMcgZc3STSXreO-u_J7C9kLsr/pub?gid=1&output=csv';
@@ -963,66 +954,6 @@
                     });
                 });
             });
-
-            // Add click handlers for image lightbox
-            document.querySelectorAll('.print-image').forEach(img => {
-                img.addEventListener('click', function(e) {
-                    // Don't trigger if clicking on the actual img element inside
-                    if (e.target.tagName === 'IMG') {
-                        e.stopPropagation();
-                    }
-                    
-                    const title = this.dataset.title;
-                    const product = groupedProducts[title];
-                    
-                    console.log('Image clicked:', title, product);
-                    
-                    if (product && product.image) {
-                        openImageLightbox(product.image, product.title);
-                    } else {
-                        console.log('No image URL found for:', title);
-                    }
-                });
-            });
-        }
-
-        function openImageLightbox(imageUrl, title) {
-            console.log('Opening lightbox with:', imageUrl, title);
-            const lightboxImg = document.getElementById('lightboxImg');
-            const lightboxTitle = document.getElementById('lightboxTitle');
-            const lightbox = document.getElementById('imageLightbox');
-            
-            // Set image source and wait for it to load
-            lightboxImg.onload = () => {
-                console.log('Image loaded successfully');
-            };
-            lightboxImg.onerror = () => {
-                console.error('Image failed to load:', imageUrl);
-            };
-            
-            lightboxImg.src = imageUrl;
-            lightboxImg.alt = title;
-            lightboxTitle.textContent = title;
-            lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            console.log('Lightbox should be visible now');
-        }
-
-        function closeImageLightbox() {
-            console.log('Closing lightbox');
-            const lightbox = document.getElementById('imageLightbox');
-            const lightboxImg = document.getElementById('lightboxImg');
-            
-            lightbox.classList.remove('active');
-            document.body.style.overflow = '';
-            
-            // Clear the image src to fully reset
-            setTimeout(() => {
-                if (!lightbox.classList.contains('active')) {
-                    lightboxImg.src = '';
-                }
-            }, 100);
         }
         
         function addToCart(product) {
@@ -1126,26 +1057,6 @@
         });
         
         document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
-        
-        document.getElementById('imageLightboxClose').addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeImageLightbox();
-        });
-        
-        document.getElementById('imageLightbox').addEventListener('click', (e) => {
-            if (e.target.id === 'imageLightbox' || e.target.classList.contains('image-lightbox-close')) {
-                closeImageLightbox();
-            }
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const lightbox = document.getElementById('imageLightbox');
-                if (lightbox.classList.contains('active')) {
-                    closeImageLightbox();
-                }
-            }
-        });
         
         loadProducts();
         loadAboutPage();
